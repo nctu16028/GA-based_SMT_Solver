@@ -4,8 +4,9 @@ from utils import prim
 
 
 class GeneticAlgorithm():
-    def __init__(self, dim: int, pins: np.ndarray, size: int) -> None:
-        self.board_dim = dim
+    def __init__(self, h: int, w: int, pins: np.ndarray, size: int) -> None:
+        self.board_h = h
+        self.board_w = w
         self.pinMap = pins
         self.chromosome_length = len(pins)
         self.population_size = size
@@ -16,7 +17,7 @@ class GeneticAlgorithm():
         self._initialization()
         optimum = self._evaluation()
         print("Best fitness:", self.fitness[optimum])
-        print("Lowest MST cost:", 2 * self.board_dim**2 - self.fitness[optimum])
+        print("Lowest MST cost:", 2 * self.board_h * self.board_w - self.fitness[optimum])
         for _ in range(num_generations):
             print("Gen", _ + 1)
             mating_pool = self._parent_selection(selection_scheme)
@@ -25,7 +26,7 @@ class GeneticAlgorithm():
             self._replacement(offspring)
             optimum = self._evaluation()
             print("Best fitness:", self.fitness[optimum])
-            print("Lowest MST cost:", 2 * self.board_dim**2 - self.fitness[optimum])
+            print("Lowest MST cost:", 2 * self.board_h * self.board_w - self.fitness[optimum])
         return optimum
         
     def _initialization(self) -> None:
@@ -38,7 +39,7 @@ class GeneticAlgorithm():
         best_fitness = -np.inf
         best_indie = -1
         for i in range(self.population_size):
-            self.fitness[i] = calculate_fitness(self.board_dim, self.pinMap, self.population[i])
+            self.fitness[i] = calculate_fitness(self.board_h, self.board_w, self.pinMap, self.population[i])
             if self.fitness[i] > best_fitness:
                 best_fitness = self.fitness[i]
                 best_indie = i
@@ -97,10 +98,10 @@ class GeneticAlgorithm():
         return winner_index
 
 
-def calculate_fitness(n: int, pinMap: np.ndarray, steinerMap: np.ndarray) -> int:
-    upperbound = 2 * n**2
+def calculate_fitness(h: int, w: int, pinMap: np.ndarray, steinerMap: np.ndarray) -> int:
+    upperbound = 2 * h * w
     vertices = np.nonzero(pinMap | steinerMap)[0]
-    cost = prim(n, vertices)
+    cost = prim(w, vertices)
     return upperbound - cost
 
 
@@ -110,15 +111,16 @@ if __name__ == '__main__':
     
     with open(argv[1], 'r') as file:
         lines = file.read().splitlines()
-    board_dim = int(lines[0])
+    board_dim = lines[0]
     pin_coords = lines[1:]
 
-    pinMap = np.zeros(board_dim * board_dim, dtype=int)
+    board_height, board_width = [int(c) for c in board_dim.split()]
+    pinMap = np.zeros(board_height * board_width, dtype=int)
     for coord in pin_coords:
         x, y = [int(c) for c in coord.split()]
-        pinMap[x * board_dim + y] = 1
-    print(pinMap.reshape((board_dim, board_dim)))
+        pinMap[x * board_width + y] = 1
+    print(pinMap.reshape((board_height, board_width)))
 
-    solver = GeneticAlgorithm(board_dim, pinMap, 200)
+    solver = GeneticAlgorithm(board_height, board_width, pinMap, 200)
     optimum = solver.run(30, 1)
-    print(solver.population[optimum].reshape((board_dim, board_dim)))
+    print(solver.population[optimum].reshape((board_height, board_width)))
