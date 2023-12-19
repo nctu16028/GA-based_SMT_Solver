@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt
 from sys import argv
 from utils import prim
 
@@ -105,6 +106,21 @@ def calculate_fitness(h: int, w: int, pinMap: np.ndarray, steinerMap: np.ndarray
     return upperbound - cost
 
 
+def visualization(pinMap2D: np.ndarray, steinerMap2D: np.ndarray) -> None:
+    plt.grid(True, linestyle='--',)
+    y_indices, x_indices = np.where(steinerMap2D == 1)
+    plt.scatter(x_indices, y_indices, marker='o', color='blue')
+    y_indices, x_indices = np.where(pinMap2D == 1)
+    plt.scatter(x_indices, y_indices, marker='o', color='red')
+    xMax = steinerMap2D.shape[1]
+    yMax = steinerMap2D.shape[0]
+    plt.xticks(np.arange(0, xMax, 1))
+    plt.yticks(np.arange(0, yMax, 1))
+    plt.axis([-1, xMax, -1, yMax])
+    plt.axis('equal')
+    plt.show()
+
+
 if __name__ == '__main__':
     if len(argv) < 2:
         raise Exception("Please specify the input data file")
@@ -124,3 +140,8 @@ if __name__ == '__main__':
     solver = GeneticAlgorithm(board_height, board_width, pinMap, 200)
     optimum = solver.run(30, 1)
     print(solver.population[optimum].reshape((board_height, board_width)))
+
+    visualization(
+        pinMap.reshape((board_height, board_width)),
+        solver.population[optimum].reshape((board_height, board_width))
+    )
