@@ -13,12 +13,14 @@ class GeneticAlgorithm():
         self.population_size = size
         self.population = []
         self.fitness = []
+        self.history = []
 
     def run(self, num_generations: int, selection_scheme: int) -> int:
         self._initialization()
         optimum = self._evaluation()
         print("Best fitness:", self.fitness[optimum])
         print("Lowest MST cost:", 2 * self.board_h * self.board_w - self.fitness[optimum])
+        self.history.append(2 * self.board_h * self.board_w - self.fitness[optimum])
         for _ in range(num_generations):
             print("Gen", _ + 1)
             mating_pool = self._parent_selection(selection_scheme)
@@ -28,6 +30,7 @@ class GeneticAlgorithm():
             optimum = self._evaluation()
             print("Best fitness:", self.fitness[optimum])
             print("Lowest MST cost:", 2 * self.board_h * self.board_w - self.fitness[optimum])
+            self.history.append(2 * self.board_h * self.board_w - self.fitness[optimum])
         return optimum
         
     def _initialization(self) -> None:
@@ -106,18 +109,26 @@ def calculate_fitness(h: int, w: int, pinMap: np.ndarray, steinerMap: np.ndarray
     return upperbound - cost
 
 
-def visualization(pinMap2D: np.ndarray, steinerMap2D: np.ndarray) -> None:
+def visualization(chart: list, pinMap2D: np.ndarray, steinerMap2D: np.ndarray) -> None:
+    plt.plot(chart, 'ro-')
+    plt.xlabel('Generations')
+    plt.ylabel('MST cost')
+    plt.title(argv[1])
+    plt.show()
+
     plt.grid(True, linestyle='--',)
     y_indices, x_indices = np.where(steinerMap2D == 1)
-    plt.scatter(x_indices, y_indices, marker='o', color='blue')
+    plt.scatter(x_indices, y_indices, marker='o', color='blue', label='Steiner points')
     y_indices, x_indices = np.where(pinMap2D == 1)
-    plt.scatter(x_indices, y_indices, marker='o', color='red')
+    plt.scatter(x_indices, y_indices, marker='o', color='red', label='Pins')
     xMax = steinerMap2D.shape[1]
     yMax = steinerMap2D.shape[0]
     plt.xticks(np.arange(0, xMax, 1))
     plt.yticks(np.arange(0, yMax, 1))
     plt.axis([-1, xMax, -1, yMax])
     plt.axis('equal')
+    plt.legend()
+    plt.title(argv[1])
     plt.show()
 
 
@@ -137,11 +148,15 @@ if __name__ == '__main__':
         pinMap[x * board_width + y] = 1
     print(pinMap.reshape((board_height, board_width)))
 
+    print(prim(board_width, np.nonzero(pinMap)[0]))
+
     solver = GeneticAlgorithm(board_height, board_width, pinMap, 200)
     optimum = solver.run(30, 1)
     print(solver.population[optimum].reshape((board_height, board_width)))
+    print(solver.history)
 
     visualization(
+        solver.history,
         pinMap.reshape((board_height, board_width)),
         solver.population[optimum].reshape((board_height, board_width))
     )
